@@ -1,0 +1,1175 @@
+{
+  "name": "Final WhatsApp Chat Support Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "3bafa16c-80e4-42c9-ac86-8ebab0d5271e",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        768
+      ],
+      "webhookId": "b0223978-8a2f-47e5-aff1-992990248150",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "CFMFTx8V8aGRqxRH",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "customer_phone",
+              "value": "={{ $json.messages?.[0]?.from ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "customer_name",
+              "value": "={{ $json.contacts?.[0]?.profile?.name ?? \"Customer\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "message_text",
+              "value": "={{ ($json.messages?.[0]?.text?.body ?? \"\").trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "message_id",
+              "value": "={{ $json.messages?.[0]?.id ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "received_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "phone_number_id",
+              "value": "={{ $json.metadata?.phone_number_id ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a7",
+              "name": "company_info",
+              "value": "Company: AI Customer Support Automation Demo. Working hours: Monday to Saturday, 9:00 AM to 6:00 PM. Sunday: closed. Customer support can help with working hours, orders, products, delivery, refunds, complaints and general support. If information is not listed here, do not invent an answer: ask for the missing details or offer human support.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "19ef151d-c2f2-4504-afba-c2d233e119b9",
+      "name": "Extract Message Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.customer_phone }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c9613bdf-6d3f-4b25-bf57-1d12704c3719",
+      "name": "Is Customer Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        448,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.message_text }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d9f7ca77-b927-47d3-84a1-60e33f7eb344",
+      "name": "Has Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        672,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ [\"human\",\"agent\",\"urgent\",\"representative\",\"person\"].some(k => $json.message_text.toLowerCase().includes(k)) }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "rightValue": "",
+                    "id": "19c11c02-22d5-46c3-849c-6f6ddb95c25f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HUMAN_SUPPORT"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ [\"refund\",\"billing\",\"return\",\"cancel\"].some(k => $json.message_text.toLowerCase().includes(k)) }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "rightValue": "",
+                    "id": "0d74a5d6-1376-42b2-a8c8-977e67bac051"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "REFUND"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ [\"complaint\",\"problem\",\"issue\",\"broken\",\"not working\",\"disappointed\"].some(k => $json.message_text.toLowerCase().includes(k)) }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "rightValue": "",
+                    "id": "3494987d-b5cd-4227-96d2-6e691b85d7c0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COMPLAINT"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ [\"hours\",\"open\",\"close\",\"timing\",\"working time\"].some(k => $json.message_text.toLowerCase().includes(k)) }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "rightValue": "",
+                    "id": "c03d0f6e-735b-422f-ae4e-77c3da1d94b2"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "FAQ_HOURS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ [\"order\",\"delivery\",\"shipping\",\"track\"].some(k => $json.message_text.toLowerCase().includes(k)) }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "rightValue": "",
+                    "id": "e934cb8c-2b36-437e-b83e-f072b9959e99"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ORDER"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "OTHER"
+        }
+      },
+      "id": "1108e9e5-9e0f-44b4-b0c6-81585b5f3c07",
+      "name": "Route by Keyword",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        896,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "response",
+              "value": "=Hello {{ $json.customer_name }}! A member of our human support team has been notified and will contact you as soon as possible (Mon-Sat, 9:00 AM - 6:00 PM). Please briefly describe your issue and share your order ID if you have one.",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "detected_intent",
+              "value": "HUMAN_SUPPORT",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "priority",
+              "value": "HIGH",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "56507565-f1ff-47ba-9f0d-4b0e080ac262",
+      "name": "Human Support Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1696,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "replied_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "0ab61e81-4d27-43d0-a19c-e01c6f4a5265",
+      "name": "Finalize Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1920,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "={{ $(\"Extract Message Fields\").item.json.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $(\"Extract Message Fields\").item.json.customer_phone }}",
+        "textBody": "={{ $json.response }}",
+        "additionalFields": {}
+      },
+      "id": "231aee9c-b708-4b4b-aa12-f815b775d5c8",
+      "name": "Send WhatsApp Reply",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        2144,
+        576
+      ],
+      "webhookId": "373e706a-09e3-490b-975c-9491a189136b",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "nK7JDWsgkF0QGvZG",
+          "name": "WhatsApp account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1xOyVcup8rncN4AySzQa3gOHxjtUsIIRErJaR2Z36A2Q",
+          "cachedResultName": "AI Customer Support Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xOyVcup8rncN4AySzQa3gOHxjtUsIIRErJaR2Z36A2Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xOyVcup8rncN4AySzQa3gOHxjtUsIIRErJaR2Z36A2Q/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_name": "={{ $(\"Extract Message Fields\").item.json.customer_name }}",
+            "customer_message": "={{ $(\"Extract Message Fields\").item.json.message_text }}",
+            "detected_intent": "={{ $(\"Finalize Reply\").item.json.detected_intent }}",
+            "automatic_reply": "={{ $(\"Finalize Reply\").item.json.response }}",
+            "timestamp": "={{ $(\"Extract Message Fields\").item.json.received_at }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_message",
+              "displayName": "customer_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "detected_intent",
+              "displayName": "detected_intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "automatic_reply",
+              "displayName": "automatic_reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "9fda66fc-5602-4b8f-b9fa-8dcdb1cb6c1a",
+      "name": "Log Conversation",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2368,
+        576
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h7HU2IALIadIZgJd",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $(\"Finalize Reply\").item.json.priority }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "HIGH"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8ccfd080-968e-4f52-9394-1c4536c0ee3d",
+      "name": "Needs Human?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        2592,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "ayeshimra381@gmail.com",
+        "subject": "=[{{ $(\"Finalize Reply\").item.json.priority }}] WhatsApp support request: {{ $(\"Finalize Reply\").item.json.detected_intent }}",
+        "emailType": "text",
+        "message": "=A WhatsApp customer needs a human agent.\n\nCustomer: {{ $(\"Extract Message Fields\").item.json.customer_name }}\nPhone: {{ $(\"Extract Message Fields\").item.json.customer_phone }}\nReceived: {{ $(\"Extract Message Fields\").item.json.received_at }}\nCategory: {{ $(\"Finalize Reply\").item.json.detected_intent }}\n\nMessage:\n{{ $(\"Extract Message Fields\").item.json.message_text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "b896dc21-bd21-48a0-8ac2-48265b81f02c",
+      "name": "Notify Support Team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2816,
+        576
+      ],
+      "webhookId": "285550f4-5955-48c5-a922-2c5046ffedb9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PE6ZX4A8st0Bmaph",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "response",
+              "value": "Thank you for contacting us about a refund or billing matter. Please share your order ID and the reason for your request. Our team has been notified and will review it and guide you through the next steps.",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "detected_intent",
+              "value": "REFUND",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "priority",
+              "value": "HIGH",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "fa07cef6-a74a-41e7-910d-49a7dc907102",
+      "name": "Refund Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1696,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "response",
+              "value": "We're sorry for the inconvenience. Please describe the issue and share your order ID if available. Our support team has been notified and will review your complaint and help resolve it.",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "detected_intent",
+              "value": "COMPLAINT",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "priority",
+              "value": "HIGH",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e22c1930-d955-41cb-a905-22d38a82306e",
+      "name": "Complaint Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1696,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "response",
+              "value": "Hello! Thank you for contacting us. Our customer support team is available Monday to Saturday, from 9:00 AM to 6:00 PM. We are closed on Sundays. How else can we help you today?",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "detected_intent",
+              "value": "FAQ",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "priority",
+              "value": "LOW",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "95043e28-d2bf-4b3b-a371-f9cc13605b98",
+      "name": "FAQ Hours Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1696,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "response",
+              "value": "=Hello {{ $json.customer_name }}! Thank you for contacting us. Please share your order ID so we can help you check your order or delivery status.",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "detected_intent",
+              "value": "ORDER",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "priority",
+              "value": "MEDIUM",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c67a2c3e-d6c4-44bb-b344-b3a50dab0913",
+      "name": "Order Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1696,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are the AI customer support assistant for our company.\n\nUse ONLY the company information below to answer the customer.\n\nCOMPANY INFORMATION:\n{{ $json.company_info }}\n\nCUSTOMER MESSAGE:\n{{ $json.message_text }}\n\nRules:\n- Answer clearly, politely and concisely, in plain text suitable for WhatsApp.\n- Never invent policies, prices, order details, delivery dates, refund, account, billing, security or technical-fix information.\n- If the answer is not in the company information, reply with exactly: NO_ANSWER\n\nReturn ONLY the message to send to the customer."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxOutputTokens": 400,
+          "temperature": 0.2,
+          "thinkingBudget": 0
+        }
+      },
+      "id": "8a444148-a7d5-4cf6-b948-61fc4e30b99c",
+      "name": "Answer From Company Info",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        960
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "30OJWYnf2O75WLQe",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.content?.parts?.[0]?.text ?? $json.text ?? \"\" }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "rightValue": ""
+            },
+            {
+              "leftValue": "={{ $json.content?.parts?.[0]?.text ?? $json.text ?? \"\" }}",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              },
+              "rightValue": "NO_ANSWER"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ac626e47-37d2-4ac4-aa48-3bc5a02d2011",
+      "name": "Reliable Answer?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1472,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "response",
+              "value": "={{ ($json.content?.parts?.[0]?.text ?? $json.text ?? \"\").trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "detected_intent",
+              "value": "FAQ_AI",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "priority",
+              "value": "LOW",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e422c68d-76f6-450d-9247-b995269d8952",
+      "name": "AI Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1696,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "response",
+              "value": "Thank you for contacting us. We could not find a reliable answer to your question, so we have created a support ticket. Our team will get back to you during working hours (Mon-Sat, 9:00 AM - 6:00 PM). You can also type \"human\" to request a support agent.",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "detected_intent",
+              "value": "OTHER_UNANSWERED",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "priority",
+              "value": "MEDIUM",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "6fc6f062-d728-4964-8077-13668a16199b",
+      "name": "Holding Reply (Ticket Created)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1696,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "response",
+              "value": "Please send a text message describing how we can help, so our support team can assist you.",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "detected_intent",
+              "value": "NON_TEXT",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "priority",
+              "value": "LOW",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d26539b7-1203-41e1-b284-441ca5fcb21e",
+      "name": "Non-Text Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1696,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Setup\n1. Create a \"WhatsApp Business Cloud\" credential (Access Token + Business Account ID from Meta > WhatsApp > API Setup) and select it in Send WhatsApp Reply.\n2. WhatsApp Trigger uses the Meta Client ID/Secret OAuth credential. Publish, then subscribe the callback URL to \"messages\" in the Meta dashboard.\n3. Set the support team email in Notify Support Team.\n4. Edit company_info in Extract Message Fields with your real FAQ content.\n5. Logs go to the \"AI Customer Support Logs\" sheet.",
+        "height": 260,
+        "width": 560,
+        "color": 4
+      },
+      "id": "4958f048-eab4-45f5-a3fa-7cdfa8f265f1",
+      "name": "Sticky Note c5b20cf1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        -352
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Logic\nKeywords route each message: human/agent/urgent, refund/billing, complaint/problem, hours, order/delivery. Anything else goes to Gemini, which may answer ONLY from company_info; if it has no reliable answer a ticket row is logged and a holding reply is sent. HIGH priority cases email a human. Meta status receipts (no message) are ignored.",
+        "height": 220,
+        "width": 560,
+        "color": 5
+      },
+      "id": "4993700f-3e47-497b-8b91-5dccba524af8",
+      "name": "Sticky Note fb2d562f",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        512,
+        -352
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Message Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message Fields": {
+      "main": [
+        [
+          {
+            "node": "Is Customer Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Customer Message?": {
+      "main": [
+        [
+          {
+            "node": "Has Text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Text?": {
+      "main": [
+        [
+          {
+            "node": "Route by Keyword",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Non-Text Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Keyword": {
+      "main": [
+        [
+          {
+            "node": "Human Support Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refund Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Complaint Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FAQ Hours Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Order Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Answer From Company Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Human Support Reply": {
+      "main": [
+        [
+          {
+            "node": "Finalize Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Reply": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp Reply": {
+      "main": [
+        [
+          {
+            "node": "Log Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Conversation": {
+      "main": [
+        [
+          {
+            "node": "Needs Human?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Human?": {
+      "main": [
+        [
+          {
+            "node": "Notify Support Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refund Reply": {
+      "main": [
+        [
+          {
+            "node": "Finalize Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complaint Reply": {
+      "main": [
+        [
+          {
+            "node": "Finalize Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ Hours Reply": {
+      "main": [
+        [
+          {
+            "node": "Finalize Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Order Reply": {
+      "main": [
+        [
+          {
+            "node": "Finalize Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer From Company Info": {
+      "main": [
+        [
+          {
+            "node": "Reliable Answer?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reliable Answer?": {
+      "main": [
+        [
+          {
+            "node": "AI Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Holding Reply (Ticket Created)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Reply": {
+      "main": [
+        [
+          {
+            "node": "Finalize Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Holding Reply (Ticket Created)": {
+      "main": [
+        [
+          {
+            "node": "Finalize Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Non-Text Reply": {
+      "main": [
+        [
+          {
+            "node": "Finalize Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "e5bd28fc-e83e-4707-9c89-c0df0bb40534",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3ce50fc7a865e7b492193c5534f6cd6c999558921d8c8ac39cd42290701be63e"
+  },
+  "nodeGroups": [],
+  "id": "nVh3vTi2yUdNqPAz",
+  "tags": []
+}
